@@ -1,8 +1,10 @@
-#!/usr/bin/env bash -x
+#!/usr/bin/env /bin/bash
 #
 # Copyright (c) 2020, Oracle and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 #
+set -x 
+
 INGRESS_VERSION=1.27.0
 DNS_PREFIX="verrazzano-ingress"
 OCI_PRIVATE_KEY_PASSPHRASE=${OCI_PRIVATE_KEY_PASSPHRASE:-""}
