@@ -9,6 +9,7 @@ INSTALL_DIR=$SCRIPT_DIR/../../install
 . $INSTALL_DIR/common.sh
 
 set -o pipefail
+set -x
 
 function delete_external_dns() {
   log "Deleting external-dns"

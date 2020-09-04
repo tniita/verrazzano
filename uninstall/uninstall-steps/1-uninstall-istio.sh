@@ -9,6 +9,7 @@ INSTALL_DIR=$SCRIPT_DIR/../../install
 . $INSTALL_DIR/common.sh
 
 set -o pipefail
+set -x
 
 TMP_DIR=$(mktemp -d)
 trap 'rc=$?; rm -rf ${TMP_DIR} || true; _logging_exit_handler $rc' EXIT
