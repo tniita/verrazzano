@@ -103,140 +103,144 @@ pipeline {
             }
         }
 
-        stage('gofmt Check') {
-            when { not { buildingTag() } }
-            steps {
-                sh """
-                    cd ${GO_REPO_PATH}/verrazzano
-                    make go-fmt
-                """
-            }
-        }
-
-        stage('go vet Check') {
-            when { not { buildingTag() } }
-            steps {
-                sh """
-                    cd ${GO_REPO_PATH}/verrazzano
-                    make go-vet
-                """
-            }
-        }
-
-        stage('golint Check') {
-            when { not { buildingTag() } }
-            steps {
-                sh """
-                    cd ${GO_REPO_PATH}/verrazzano
-                    make go-lint
-                """
-            }
-        }
-
-        stage('ineffassign Check') {
-            when { not { buildingTag() } }
-            steps {
-                sh """
-                    cd ${GO_REPO_PATH}/verrazzano
-                    make go-ineffassign
-                """
-            }
-        }
-
-        stage('Third Party License Check') {
-            when {
-                allOf {
-                    not { buildingTag() }
-                    equals expected: false, actual: skipBuild
+        stage('Check') {
+            parallel {
+                stage('gofmt Check') {
+                    when { not { buildingTag() } }
+                    steps {
+                        sh """
+                            cd ${GO_REPO_PATH}/verrazzano
+                            make go-fmt
+                        """
+                    }
                 }
-            }
-            steps {
-                thirdpartyCheck()
-            }
-        }
 
-        stage('Copyright Compliance Check') {
-            when {
-                allOf {
-                    not { buildingTag() }
-                    equals expected: false, actual: skipBuild
+                stage('go vet Check') {
+                    when { not { buildingTag() } }
+                    steps {
+                        sh """
+                            cd ${GO_REPO_PATH}/verrazzano
+                            make go-vet
+                        """
+                    }
                 }
-            }
-            steps {
-                copyrightScan "${WORKSPACE}"
-            }
-        }
 
-        stage('Unit Tests') {
-            when {
-                allOf {
-                    not { buildingTag() }
-                    equals expected: false, actual: skipBuild
+                stage('golint Check') {
+                    when { not { buildingTag() } }
+                    steps {
+                        sh """
+                            cd ${GO_REPO_PATH}/verrazzano
+                            make go-lint
+                        """
+                    }
                 }
-            }
-            steps {
-                sh """
-                    cd ${GO_REPO_PATH}/verrazzano
-                    make unit-test
-                    make -B coverage
-                    cp coverage.html ${WORKSPACE}
-                    cp coverage.xml ${WORKSPACE}
-                    build/scripts/copy-junit-output.sh ${WORKSPACE}
-                """
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: '**/coverage.html', allowEmptyArchive: true
-                    cobertura(coberturaReportFile: 'coverage.xml',
-                      enableNewApi: true,
-                      autoUpdateHealth: true,
-                      autoUpdateStability: true,
-                      failUnstable: true,
-                      failUnhealthy: true,
-                      failNoReports: true,
-                      onlyStable: false,
-                      conditionalCoverageTargets: '80, 0, 0',
-                      fileCoverageTargets: '80, 0, 0',
-                      lineCoverageTargets: '80, 0, 0',
-                      packageCoverageTargets: '80, 0, 0',
-                    )
-                    junit testResults: '**/*test-result.xml', allowEmptyResults: true
-                }
-            }
-        }
 
-        stage('Scan Image') {
-            when {
-                allOf {
-                    not { buildingTag() }
-                    equals expected: false, actual: skipBuild
+                stage('ineffassign Check') {
+                    when { not { buildingTag() } }
+                    steps {
+                        sh """
+                            cd ${GO_REPO_PATH}/verrazzano
+                            make go-ineffassign
+                        """
+                    }
                 }
-            }
-            steps {
-                script {
-                    clairScanTemp "${env.DOCKER_REPO}/${env.DOCKER_NAMESPACE}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
-                }
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: '**/scanning-report.json', allowEmptyArchive: true
-                }
-            }
-        }
 
-        stage('Integration Tests') {
-            when { not { buildingTag() } }
-            steps {
-                sh """
-                    cd ${GO_REPO_PATH}/verrazzano
-                    make integ-test DOCKER_IMAGE_NAME=${DOCKER_IMAGE_NAME} DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG}
-                    build/scripts/copy-junit-output.sh ${WORKSPACE}
-                """
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: '**/coverage.html', allowEmptyArchive: true
-                    junit testResults: '**/*test-result.xml', allowEmptyResults: true
+                stage('Third Party License Check') {
+                    when {
+                        allOf {
+                            not { buildingTag() }
+                            equals expected: false, actual: skipBuild
+                        }
+                    }
+                    steps {
+                        thirdpartyCheck()
+                    }
+                }
+
+                stage('Copyright Compliance Check') {
+                    when {
+                        allOf {
+                            not { buildingTag() }
+                            equals expected: false, actual: skipBuild
+                        }
+                    }
+                    steps {
+                        copyrightScan "${WORKSPACE}"
+                    }
+                }
+
+                stage('Unit Tests') {
+                    when {
+                        allOf {
+                            not { buildingTag() }
+                            equals expected: false, actual: skipBuild
+                        }
+                    }
+                    steps {
+                        sh """
+                            cd ${GO_REPO_PATH}/verrazzano
+                            make unit-test
+                            make -B coverage
+                            cp coverage.html ${WORKSPACE}
+                            cp coverage.xml ${WORKSPACE}
+                            build/scripts/copy-junit-output.sh ${WORKSPACE}
+                        """
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: '**/coverage.html', allowEmptyArchive: true
+                            cobertura(coberturaReportFile: 'coverage.xml',
+                              enableNewApi: true,
+                              autoUpdateHealth: true,
+                              autoUpdateStability: true,
+                              failUnstable: true,
+                              failUnhealthy: true,
+                              failNoReports: true,
+                              onlyStable: false,
+                              conditionalCoverageTargets: '80, 0, 0',
+                              fileCoverageTargets: '80, 0, 0',
+                              lineCoverageTargets: '80, 0, 0',
+                              packageCoverageTargets: '80, 0, 0',
+                            )
+                            junit testResults: '**/*test-result.xml', allowEmptyResults: true
+                        }
+                    }
+                }
+
+                stage('Scan Image') {
+                    when {
+                        allOf {
+                            not { buildingTag() }
+                            equals expected: false, actual: skipBuild
+                        }
+                    }
+                    steps {
+                        script {
+                            clairScanTemp "${env.DOCKER_REPO}/${env.DOCKER_NAMESPACE}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
+                        }
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: '**/scanning-report.json', allowEmptyArchive: true
+                        }
+                    }
+                }
+
+                stage('Integration Tests') {
+                    when { not { buildingTag() } }
+                    steps {
+                        sh """
+                            cd ${GO_REPO_PATH}/verrazzano
+                            make integ-test DOCKER_IMAGE_NAME=${DOCKER_IMAGE_NAME} DOCKER_IMAGE_TAG=${DOCKER_IMAGE_TAG}
+                            build/scripts/copy-junit-output.sh ${WORKSPACE}
+                        """
+                    }
+                    post {
+                        always {
+                            archiveArtifacts artifacts: '**/coverage.html', allowEmptyArchive: true
+                            junit testResults: '**/*test-result.xml', allowEmptyResults: true
+                        }
+                    }
                 }
             }
         }
