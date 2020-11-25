@@ -4,6 +4,8 @@
 NAME:=verrazzano-platform-operator
 REPO_NAME:=verrazzano-platform-operator
 
+BUILDVERSION ?= $(shell grep verrazzano-development-version .verrazzano-development-version | cut -d= -f2)-$(shell git rev-parse --short HEAD)
+BUILDDATE ?= $(shell date +%Y%m%d%H%M%S)
 
 DOCKER_IMAGE_NAME ?= ${NAME}-dev
 DOCKER_IMAGE_TAG ?= local-$(shell git rev-parse --short HEAD)
@@ -64,6 +66,14 @@ check: go-fmt go-vet go-ineffassign go-lint
 #
 # Go build related tasks
 #
+.PHONY: go-build
+go-build: go-mod
+	GO111MODULE=on $(GO) build \
+    	-mod=vendor \
+    	-ldflags '-extldflags "-static"' \
+    	-ldflags "-X main.buildVersion=${BUILDVERSION} -X main.buildDate=${BUILDDATE}" \
+    	-o bin/verrazzano-platform-operator
+
 .PHONY: go-install
 go-install: go-mod
 	$(GO) install
@@ -139,7 +149,7 @@ docker-clean:
 	rm -rf ${DIST_DIR}
 
 .PHONY: docker-build
-docker-build: manifests generate go-mod
+docker-build: manifests generate go-mod go-build
 	docker build --pull \
 		-t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
 
@@ -194,8 +204,7 @@ endif
 	echo 'Create cluster...'
 	HTTP_PROXY="" HTTPS_PROXY="" http_proxy="" https_proxy="" time kind create cluster \
 		--name ${CLUSTER_NAME} \
-		--wait 5m \
-		--config=test/kind-config.yaml
+		--wait 5m
 	kubectl config set-context kind-${CLUSTER_NAME}
 ifdef JENKINS_URL
 	# Get the ip address of the container running the kube apiserver
