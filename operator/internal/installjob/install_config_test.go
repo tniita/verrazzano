@@ -311,3 +311,66 @@ func TestOCIDNSInstall(t *testing.T) {
 	assert.Equalf(t, "LetsEncrypt", config.Certificates.ACME.Provider, "Expected cert provider did not match")
 	assert.Equalf(t, "someguy@foo.com", config.Certificates.ACME.EmailAddress, "Expected email address did not match")
 }
+
+// TestNodePortInstall tests the creation of a kind install configuration
+// GIVEN a verrazzano.install.verrazzano.io custom resource
+//  WHEN I call GetInstallConfig
+//  THEN the kind install configuration is created and verified
+func TestNodePortInstall(t *testing.T) {
+	vz := installv1alpha1.Verrazzano{
+		Spec: installv1alpha1.VerrazzanoSpec{
+			Profile:         "dev",
+			EnvironmentName: "kind",
+			DNS: installv1alpha1.DNS{
+				XIPIO: installv1alpha1.XIPIO{},
+			},
+			Ingress: installv1alpha1.Ingress{
+				Type: installv1alpha1.NodePort,
+				NodePort: installv1alpha1.NodePortInstall{
+					IngressIP: "1.2.3.4",
+				},
+				Verrazzano: installv1alpha1.VerrazzanoInstall{
+					NGINXInstallArgs: []installv1alpha1.InstallArgs{
+						{
+							Name:  "name1",
+							Value: "value1",
+						},
+						{
+							Name:  "name2",
+							Value: "value2",
+						},
+						{
+							Name: "name3",
+							ValueList: []string{
+								"valueList3-1",
+								"valueList3-2",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	config, _ := GetInstallConfig(&vz, nil)
+	assert.Equalf(t, "kind", config.EnvironmentName, "Expected environment name did not match")
+	assert.Equalf(t, InstallProfileDev, config.Profile, "Expected profile did not match")
+
+	assert.Equalf(t, DNSTypeXip, config.DNS.Type, "Expected DNS type did not match")
+
+	assert.Equalf(t, IngressTypeNodePort, config.Ingress.Type, "Expected Ingress type did not match")
+	assert.Equalf(t, "1.2.3.4", config.Ingress.NodePort.IngressIP, "Expected Ingress IP did not match")
+	assert.Equalf(t, 4, len(config.Ingress.Verrazzano.NginxInstallArgs), "Expected nginxInstallArgs length did not match")
+	assert.Equalf(t, "name1", config.Ingress.Verrazzano.NginxInstallArgs[0].Name, "Expected nginxInstallArg name did not match")
+	assert.Equalf(t, "value1", config.Ingress.Verrazzano.NginxInstallArgs[0].Value, "Expected nginxInstallArg value did not match")
+	assert.Equalf(t, "name2", config.Ingress.Verrazzano.NginxInstallArgs[1].Name, "Expected nginxInstallArg name did not match")
+	assert.Equalf(t, "value2", config.Ingress.Verrazzano.NginxInstallArgs[1].Value, "Expected nginxInstallArg value did not match")
+	assert.Equalf(t, fmt.Sprintf("%s[0]", "name3"), config.Ingress.Verrazzano.NginxInstallArgs[2].Name, "Expected nginxInstallArg name did not match")
+	assert.Equalf(t, "valueList3-1", config.Ingress.Verrazzano.NginxInstallArgs[2].Value, "Expected nginxInstallArg value did not match")
+	assert.Equalf(t, fmt.Sprintf("%s[1]", "name3"), config.Ingress.Verrazzano.NginxInstallArgs[3].Name, "Expected nginxInstallArg name did not match")
+	assert.Equalf(t, "valueList3-2", config.Ingress.Verrazzano.NginxInstallArgs[3].Value, "Expected nginxInstallArg value did not match")
+
+	assert.Equalf(t, CertIssuerTypeCA, config.Certificates.IssuerType, "Expected certification issuer type did not match")
+	assert.Equalf(t, "cattle-system", config.Certificates.CA.ClusterResourceNamespace, "Expected namespace did not match")
+	assert.Equalf(t, "tls-rancher", config.Certificates.CA.SecretName, "Expected CA secret name did not match")
+}

@@ -95,11 +95,17 @@ type Verrazzano struct {
 	Ports            []IngressPort `json:"ports,omitempty"`
 }
 
+// NodePort configuration
+type NodePort struct {
+	IngressIP string `json:"ingressIp"`
+}
+
 // Ingress configuration for a Verrazzano installation
 type Ingress struct {
 	Type        IngressType `json:"type"`
 	Verrazzano  Verrazzano  `json:"verrazzano,omitempty"`
 	Application Application `json:"application,omitempty"`
+	NodePort    NodePort    `json:"nodePort,omitempty"`
 }
 
 // ExternalDNS configuration
@@ -194,16 +200,7 @@ func newOCIDNSInstallConfig(vz *installv1alpha1.Verrazzano, auth *DNSAuth) (*Ins
 				DNSZoneName:            vz.Spec.DNS.OCI.DNSZoneName,
 			},
 		},
-		Ingress: Ingress{
-			Type: getIngressType(vz.Spec.Ingress.Type),
-			Verrazzano: Verrazzano{
-				NginxInstallArgs: getIngressArgs(vz.Spec.Ingress.Verrazzano.NGINXInstallArgs),
-				Ports:            getIngressPorts(vz.Spec.Ingress.Verrazzano.Ports),
-			},
-			Application: Application{
-				IstioInstallArgs: getIngressArgs(vz.Spec.Ingress.Application.IstioInstallArgs),
-			},
-		},
+		Ingress: getIngress(vz.Spec.Ingress),
 		Certificates: Certificate{
 			IssuerType: CertIssuerTypeAcme,
 			ACME: &CertificateACME{
@@ -224,16 +221,7 @@ func newXipIoInstallConfig(vz *installv1alpha1.Verrazzano) *InstallConfiguration
 		DNS: DNS{
 			Type: DNSTypeXip,
 		},
-		Ingress: Ingress{
-			Type: getIngressType(vz.Spec.Ingress.Type),
-			Verrazzano: Verrazzano{
-				NginxInstallArgs: getIngressArgs(vz.Spec.Ingress.Verrazzano.NGINXInstallArgs),
-				Ports:            getIngressPorts(vz.Spec.Ingress.Verrazzano.Ports),
-			},
-			Application: Application{
-				IstioInstallArgs: getIngressArgs(vz.Spec.Ingress.Application.IstioInstallArgs),
-			},
-		},
+		Ingress: getIngress(vz.Spec.Ingress),
 		Certificates: Certificate{
 			IssuerType: CertIssuerTypeCA,
 			CA: &CertificateCA{
@@ -257,16 +245,7 @@ func newExternalDNSInstallConfig(vz *installv1alpha1.Verrazzano) *InstallConfigu
 				Suffix: vz.Spec.DNS.External.Suffix,
 			},
 		},
-		Ingress: Ingress{
-			Type: getIngressType(vz.Spec.Ingress.Type),
-			Verrazzano: Verrazzano{
-				NginxInstallArgs: getIngressArgs(vz.Spec.Ingress.Verrazzano.NGINXInstallArgs),
-				Ports:            getIngressPorts(vz.Spec.Ingress.Verrazzano.Ports),
-			},
-			Application: Application{
-				IstioInstallArgs: getIngressArgs(vz.Spec.Ingress.Application.IstioInstallArgs),
-			},
-		},
+		Ingress: getIngress(vz.Spec.Ingress),
 		Certificates: Certificate{
 			IssuerType: CertIssuerTypeCA,
 			CA: &CertificateCA{
@@ -340,6 +319,34 @@ func getIngressType(ingressType installv1alpha1.IngressType) IngressType {
 	}
 
 	return IngressTypeNodePort
+}
+
+func getIngress(ingress installv1alpha1.Ingress) Ingress {
+	if getIngressType(ingress.Type) == IngressTypeNodePort {
+		return Ingress{
+			Type: getIngressType(ingress.Type),
+			Verrazzano: Verrazzano{
+				NginxInstallArgs: getIngressArgs(ingress.Verrazzano.NGINXInstallArgs),
+				Ports:            getIngressPorts(ingress.Verrazzano.Ports),
+			},
+			Application: Application{
+				IstioInstallArgs: getIngressArgs(ingress.Application.IstioInstallArgs),
+			},
+			NodePort: NodePort{
+				IngressIP: ingress.NodePort.IngressIP,
+			},
+		}
+	}
+	return Ingress{
+		Type: getIngressType(ingress.Type),
+		Verrazzano: Verrazzano{
+			NginxInstallArgs: getIngressArgs(ingress.Verrazzano.NGINXInstallArgs),
+			Ports:            getIngressPorts(ingress.Verrazzano.Ports),
+		},
+		Application: Application{
+			IstioInstallArgs: getIngressArgs(ingress.Application.IstioInstallArgs),
+		},
+	}
 }
 
 // getEnvironmentName returns the install environment name
