@@ -17,7 +17,7 @@ For more information and the code of this application, see the [Verrazzano examp
 
    ```
    kubectl create secret docker-registry ocr \
-           --docker-server=container-registry.oracle.com \
+           --docker-server=harbor.mark.v8o.oracledx.com \
            --docker-username=YOUR_USERNAME \
            --docker-password=YOUR_PASSWORD \
            --docker-email=YOUR_EMAIL
