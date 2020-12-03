@@ -149,15 +149,6 @@ spec:
                         type: object
                       type: array
                   type: object
-                nodePort:
-                  description: NodePort install options
-                  properties:
-                    ingressIp:
-                      description: Node IP for the ingress controller
-                      type: string
-                  required:
-                  - ingressIp
-                  type: object
                 type:
                   description: Type of ingress.  Default is LoadBalancer
                   type: string

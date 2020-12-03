@@ -10,8 +10,6 @@ spec:
   profile: dev
   ingress:
     type: NodePort
-    nodePort:
-      ingressIp: my-ingress-ip
     verrazzano:
       nginxInstallArgs:
         - name: controller.kind

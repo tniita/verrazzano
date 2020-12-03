@@ -110,12 +110,6 @@ type ApplicationInstall struct {
 	IstioInstallArgs []InstallArgs `json:"istioInstallArgs,omitempty"`
 }
 
-// NodePortInstall configuration
-type NodePortInstall struct {
-	// Node IP for the ingress controller
-	IngressIP string `json:"ingressIp"`
-}
-
 // Ingress identifies the ingress configuration.
 type Ingress struct {
 	// Type of ingress.  Default is LoadBalancer
@@ -127,9 +121,6 @@ type Ingress struct {
 	// Non-Verrazzano infrastructure install options
 	// +optional
 	Application ApplicationInstall `json:"application,omitempty"`
-	// NodePort install options
-	// +optional
-	NodePort NodePortInstall `json:"nodePort,omitempty"`
 }
 
 // ProviderType identifies Acme provider type.

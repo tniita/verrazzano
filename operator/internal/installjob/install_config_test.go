@@ -326,9 +326,6 @@ func TestNodePortInstall(t *testing.T) {
 			},
 			Ingress: installv1alpha1.Ingress{
 				Type: installv1alpha1.NodePort,
-				NodePort: installv1alpha1.NodePortInstall{
-					IngressIP: "1.2.3.4",
-				},
 				Verrazzano: installv1alpha1.VerrazzanoInstall{
 					NGINXInstallArgs: []installv1alpha1.InstallArgs{
 						{
@@ -360,7 +357,6 @@ func TestNodePortInstall(t *testing.T) {
 	assert.Equalf(t, DNSTypeXip, config.DNS.Type, "Expected DNS type did not match")
 
 	assert.Equalf(t, IngressTypeNodePort, config.Ingress.Type, "Expected Ingress type did not match")
-	assert.Equalf(t, "1.2.3.4", config.Ingress.NodePort.IngressIP, "Expected Ingress IP did not match")
 	assert.Equalf(t, 4, len(config.Ingress.Verrazzano.NginxInstallArgs), "Expected nginxInstallArgs length did not match")
 	assert.Equalf(t, "name1", config.Ingress.Verrazzano.NginxInstallArgs[0].Name, "Expected nginxInstallArg name did not match")
 	assert.Equalf(t, "value1", config.Ingress.Verrazzano.NginxInstallArgs[0].Value, "Expected nginxInstallArg value did not match")

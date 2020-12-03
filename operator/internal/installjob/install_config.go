@@ -96,17 +96,11 @@ type Verrazzano struct {
 	Ports            []IngressPort `json:"ports,omitempty"`
 }
 
-// NodePort configuration
-type NodePort struct {
-	IngressIP string `json:"ingressIp"`
-}
-
 // Ingress configuration for a Verrazzano installation
 type Ingress struct {
 	Type        IngressType `json:"type"`
 	Verrazzano  Verrazzano  `json:"verrazzano,omitempty"`
 	Application Application `json:"application,omitempty"`
-	NodePort    NodePort    `json:"nodePort,omitempty"`
 }
 
 // ExternalDNS configuration
@@ -326,21 +320,6 @@ func getIngressType(ingressType installv1alpha1.IngressType) IngressType {
 }
 
 func getIngress(ingress installv1alpha1.Ingress) Ingress {
-	if getIngressType(ingress.Type) == IngressTypeNodePort {
-		return Ingress{
-			Type: getIngressType(ingress.Type),
-			Verrazzano: Verrazzano{
-				NginxInstallArgs: getIngressArgs(ingress.Verrazzano.NGINXInstallArgs),
-				Ports:            getIngressPorts(ingress.Verrazzano.Ports),
-			},
-			Application: Application{
-				IstioInstallArgs: getIngressArgs(ingress.Application.IstioInstallArgs),
-			},
-			NodePort: NodePort{
-				IngressIP: ingress.NodePort.IngressIP,
-			},
-		}
-	}
 	return Ingress{
 		Type: getIngressType(ingress.Type),
 		Verrazzano: Verrazzano{
