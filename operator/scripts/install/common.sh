@@ -218,11 +218,11 @@ command -v curl >/dev/null 2>&1 || {
 GLOBAL_HUB_REPO=container-registry.oracle.com/olcne
 GLOBAL_IMAGE_PULL_SECRET=verrazzano-container-registry
 
-CERT_MANAGER_IMAGE=ghcr.io/verrazzano/cert-manager-controller
+CERT_MANAGER_IMAGE=localhost:5000/verrazzano/cert-manager-controller
 CERT_MANAGER_TAG=0.13.1-20201016205232-4c8f3fe38
 CERT_MANAGER_RELEASE=0.13
 CERT_MANAGER_HELM_CHART_VERSION=0.13.1
-CERT_MANAGER_SOLVER_IMAGE=ghcr.io/verrazzano/cert-manager-acmesolver
+CERT_MANAGER_SOLVER_IMAGE=localhost:5000/verrazzano/cert-manager-acmesolver
 CERT_MANAGER_SOLVER_TAG=0.13.1-20201016205234-4c8f3fe38
 
 EXTERNAL_DNS_REPO=verrazzano/external-dns
@@ -233,28 +233,28 @@ EXTERNAL_DNS_REGISTRY=ghcr.io
 GRAFANA_REPO=container-registry.oracle.com/olcne/grafana
 GRAFANA_TAG=v6.4.4
 
-ISTIO_CORE_DNS_PLUGIN_IMAGE=ghcr.io/verrazzano/istio-coredns-plugin
+ISTIO_CORE_DNS_PLUGIN_IMAGE=localhost:5000/verrazzano/istio-coredns-plugin
 ISTIO_CORE_DNS_PLUGIN_TAG=0.2-20201016204812-23723dcb
 ISTIO_CORE_DNS_IMAGE=container-registry.oracle.com/olcne/coredns
 ISTIO_CORE_DNS_TAG=1.6.2
 ISTIO_VERSION=1.4.6
 ISTIO_HELM_CHART_VERSION=1.4.10
 
-KEYCLOAK_IMAGE=ghcr.io/verrazzano/keycloak
+KEYCLOAK_IMAGE=localhost:5000/verrazzano/keycloak
 KEYCLOAK_IMAGE_TAG=10.0.1-20201016212759-30d98b0
 KEYCLOAK_CHART_VERSION=8.2.2
 
-KEYCLOAK_THEME_IMAGE=ghcr.io/verrazzano/keycloak-oracle-theme:0.4.0-20201026173040-347277a
+KEYCLOAK_THEME_IMAGE=localhost:5000/verrazzano/keycloak-oracle-theme:0.4.0-20201026173040-347277a
 
 MYSQL_IMAGE_TAG=8.0.20
 
-NGINX_INGRESS_CONTROLLER_IMAGE=ghcr.io/verrazzano/nginx-ingress-controller
+NGINX_INGRESS_CONTROLLER_IMAGE=localhost:5000/verrazzano/nginx-ingress-controller
 NGINX_INGRESS_CONTROLLER_TAG=0.32-20201016205412-8580ea0ef
 NGINX_INGRESS_CONTROLLER_VERSION=1.27.0
 
-NGINX_DEFAULT_BACKEND_IMAGE=ghcr.io/verrazzano/nginx-ingress-default-backend
+NGINX_DEFAULT_BACKEND_IMAGE=localhost:5000/verrazzano/nginx-ingress-default-backend
 NGINX_DEFAULT_BACKEND_TAG=0.32-20201016205412-8580ea0ef
 
-RANCHER_IMAGE=ghcr.io/verrazzano/rancher
+RANCHER_IMAGE=localhost:5000/verrazzano/rancher
 RANCHER_VERSION=v2.4.3
 RANCHER_TAG=v2.4.3-20201016205256-4988df094

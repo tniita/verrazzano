@@ -29,17 +29,17 @@ elasticSearch:
 
 verrazzanoOperator:
   name: verrazzano-operator
-  imageName: ghcr.io/verrazzano/verrazzano-operator
+  imageName: localhost:5000/verrazzano/verrazzano-operator
   imageVersion: 0.6.0-20201120085322-82bcb1b
-  cohMicroImage: ghcr.io/verrazzano/verrazzano-coh-cluster-operator:0.5.0-20201112155855-709d712
-  helidonMicroImage: ghcr.io/verrazzano/verrazzano-helidon-app-operator:0.5.0-20201112153844-e0e4790
-  wlsMicroImage: ghcr.io/verrazzano/verrazzano-wko-operator:0.5.0-20201112154348-48bbb61
-  prometheusPusherImage: ghcr.io/verrazzano/prometheus-pusher:1.0.1-20201016212958-5b64612
-  nodeExporterImage: ghcr.io/verrazzano/node-exporter:0.18.1-20201016212926-e3dc9ad
-  filebeatImage: ghcr.io/verrazzano/filebeat:6.8.3-20201016212236-05eabe44b
-  journalbeatImage: ghcr.io/verrazzano/journalbeat:6.8.3-20201016212623-05eabe44b
+  cohMicroImage: localhost:5000/verrazzano/verrazzano-coh-cluster-operator:0.5.0-20201112155855-709d712
+  helidonMicroImage: localhost:5000/verrazzano/verrazzano-helidon-app-operator:0.5.0-20201112153844-e0e4790
+  wlsMicroImage: localhost:5000/verrazzano/verrazzano-wko-operator:0.5.0-20201112154348-48bbb61
+  prometheusPusherImage: localhost:5000/verrazzano/prometheus-pusher:1.0.1-20201016212958-5b64612
+  nodeExporterImage: localhost:5000/verrazzano/node-exporter:0.18.1-20201016212926-e3dc9ad
+  filebeatImage: localhost:5000/verrazzano/filebeat:6.8.3-20201016212236-05eabe44b
+  journalbeatImage: localhost:5000/verrazzano/journalbeat:6.8.3-20201016212623-05eabe44b
   weblogicOperatorImage: oracle/weblogic-kubernetes-operator:3.0.2
-  fluentdImage: ghcr.io/verrazzano/fluentd-kubernetes-daemonset:v1.10.4-20201016214205-7f37ac6
+  fluentdImage: localhost:5000/verrazzano/fluentd-kubernetes-daemonset:v1.10.4-20201016214205-7f37ac6
   apiServerRealm: verrazzano-system
   RequestMemory: 72Mi
   cohMicroRequestMemory: 28Mi
@@ -54,7 +54,7 @@ verrazzanoOperator:
 
 monitoringOperator:
   name: verrazzano-monitoring-operator
-  imageName: ghcr.io/verrazzano/verrazzano-monitoring-operator
+  imageName: localhost:5000/verrazzano/verrazzano-monitoring-operator
   imageVersion: 0.6.0-20201119214106-c34f49b
   metricsPort: 8090
   defaultSimpleCompReplicas: 1
@@ -62,21 +62,21 @@ monitoringOperator:
   grafanaImage: container-registry.oracle.com/olcne/grafana:v6.4.4
   prometheusImage: container-registry.oracle.com/olcne/prometheus:v2.13.1
   prometheusInitImage: ghcr.io/oracle/oraclelinux:7-slim
-  prometheusGatewayImage: ghcr.io/verrazzano/prometheus-pushgateway:1.2.0-20201016205229-164dd8b
+  prometheusGatewayImage: localhost:5000/verrazzano/prometheus-pushgateway:1.2.0-20201016205229-164dd8b
   alertManagerImage: "noimage"
   esWaitTargetVersion: 7.6.1
-  esImage: ghcr.io/verrazzano/elasticsearch:7.6.1-20201130145440-5c76ab1
-  esWaitImage: ghcr.io/verrazzano/verrazzano-monitoring-instance-eswait:0.6.0-20201119214106-c34f49b
+  esImage: localhost:5000/verrazzano/elasticsearch:7.6.1-20201130145440-5c76ab1
+  esWaitImage: localhost:5000/verrazzano/verrazzano-monitoring-instance-eswait:0.6.0-20201119214106-c34f49b
   esInitImage: ghcr.io/oracle/oraclelinux:7.8
-  kibanaImage: ghcr.io/verrazzano/kibana:7.6.1-20201130145840-7717e73
-  monitoringInstanceApiImage: ghcr.io/verrazzano/verrazzano-monitoring-instance-api:0.5.0-20201112155857-82662f1
-  configReloaderImage: ghcr.io/verrazzano/configmap-reload:0.3-20201016205243-4f24a0e
-  nodeExporterImage: ghcr.io/verrazzano/node-exporter:0.18.1-20201016212926-e3dc9ad
+  kibanaImage: localhost:5000/verrazzano/kibana:7.6.1-20201130145840-7717e73
+  monitoringInstanceApiImage: localhost:5000/verrazzano/verrazzano-monitoring-instance-api:0.5.0-20201112155857-82662f1
+  configReloaderImage: localhost:5000/verrazzano/configmap-reload:0.3-20201016205243-4f24a0e
+  nodeExporterImage: localhost:5000/verrazzano/node-exporter:0.18.1-20201016212926-e3dc9ad
   RequestMemory: 48Mi
 
 clusterOperator:
   name: verrazzano-cluster-operator
-  imageName: ghcr.io/verrazzano/verrazzano-cluster-operator
+  imageName: localhost:5000/verrazzano/verrazzano-cluster-operator
   imageVersion: 0.5.0-20201113214457-cf62537
   rancherURL:
   rancherUserName:
@@ -87,7 +87,7 @@ clusterOperator:
 verrazzanoAdmissionController:
   name: verrazzano-validation
   controllerName: verrazzano-admission-controller
-  imageName: ghcr.io/verrazzano/verrazzano-admission-controller
+  imageName: localhost:5000/verrazzano/verrazzano-admission-controller
   imageVersion: 0.5.0-20201113214810-3312700
   caBundle:
   RequestMemory: 15Mi
