@@ -99,9 +99,3 @@ if [ $? -eq 0 ]; then
   exit 1
 fi
 kubectl create secret generic $OCI_CONFIG_SECRET_NAME --from-file=$OUTPUT_FILE
-
-
-
-
-
-

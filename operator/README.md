@@ -50,6 +50,8 @@ kubectl apply -f config/samples/install-default.yaml
 cp config/samples/install-oci.yaml /tmp
 
 # edit the file and provide the DNS ZONE name, OCID, and compartment OCID, and secret name
+# Initiate a Verrazzano install
+kubectl apply -f /tmp/install-oci.yaml
 
 # Monitor the install
 kubectl logs -f $(kubectl get pod -l job-name=verrazzano-install-my-verrazzano -o jsonpath="{.items[0].metadata.name}")
