@@ -1,0 +1,7 @@
+FROM ghcr.io/oracle/oraclelinux:7-slim@sha256:fcc6f54bb01fc83319990bf5fa1b79f1dec93cbb87db3c5a8884a5a44148e7bb
+
+COPY application-operator /usr/local/bin/
+
+USER 1000:1000
+
+ENTRYPOINT ["/usr/local/bin/application-operator"]

@@ -1,0 +1,21 @@
+# Copyright (c) 2020, Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+build/_output
+build/deploy
+vendor
+.idea
+**/*.iml
+pkg/assets
+dist
+archive
+latest
+known_licenses.txt
+no_licenses.txt
+thirdparty_licenses
+index.yaml
+/coverage.cov
+/coverageTmp.cov
+/coverage.html
+/coverage.xml
+**/integ*result.xml
+installer/scripts/build

@@ -1,248 +1,71 @@
-# Copyright (C) 2020, Oracle and/or its affiliates.
-# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
-
-NAME:=verrazzano-platform-operator
-REPO_NAME:=verrazzano-platform-operator
-
-
-DOCKER_IMAGE_NAME ?= ${NAME}-dev
-DOCKER_IMAGE_TAG ?= local-$(shell git rev-parse --short HEAD)
-
-CREATE_LATEST_TAG=0
-
-CRD_OPTIONS ?= "crd:crdVersions=v1"
-
-ifeq ($(MAKECMDGOALS),$(filter $(MAKECMDGOALS),docker-push push-tag))
-ifndef DOCKER_REPO
-    $(error DOCKER_REPO must be defined as the name of the docker repository where image will be pushed)
-endif
-ifndef DOCKER_NAMESPACE
-    $(error DOCKER_NAMESPACE must be defined as the name of the docker namespace where image will be pushed)
-endif
-DOCKER_IMAGE_FULLNAME = ${DOCKER_REPO}/${DOCKER_NAMESPACE}/${DOCKER_IMAGE_NAME}
-endif
-
-OPERATOR_VERSION = ${DOCKER_IMAGE_TAG}
-ifdef RELEASE_VERSION
-	OPERATOR_VERSION = ${RELEASE_VERSION}
-endif
-ifndef RELEASE_BRANCH
-	RELEASE_BRANCH=$(shell git rev-parse --abbrev-ref HEAD)
-endif
-
-DIST_DIR:=dist
-K8S_NAMESPACE:=default
-WATCH_NAMESPACE:=
-EXTRA_PARAMS=
-INTEG_RUN_ID=
-ENV_NAME=verrazzano-platform-operator
-GO ?= GO111MODULE=on GOPRIVATE=github.com/verrazzano go
-CRD_PATH=operator/config/crd/bases
-CODEGEN_PATH = k8s.io/code-generator
-
-.PHONY: build
-build: go-mod
-	go build -o bin/verrazzano-platform-operator operator/main.go
-
-# Run against the configured Kubernetes cluster in ~/.kube/config
-.PHONY: run
-run:
-	$(GO) run operator/main.go --kubeconfig=${KUBECONFIG} --zap-log-level=debug
-
-# Install CRDs into a cluster
-.PHONY: install-crds
-install-crds:
-	kustomize build operator/config/crd | kubectl apply -f -
-
-# Uninstall CRDs from a cluster
-.PHONY: uninstall-crds
-uninstall-crds:
-	kustomize build operator/config/crd | kubectl delete -f -
-
-.PHONY: check
-check: go-fmt go-vet go-ineffassign go-lint
-
+# WARNING: DO NOT EDIT, THIS FILE IS PROBABLY A COPY
 #
-# Go build related tasks
+# The original version of this file is located in the https://github.com/istio/common-files repo.
+# If you're looking at this file in a different repo and want to make a change, please go to the
+# common-files repo, make the change there and check it in. Then come back to this repo and run
+# "make update-common".
+
+# Copyright Istio Authors
 #
-.PHONY: go-install
-go-install: go-mod
-	$(GO) install ./operator/...
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-.PHONY: go-fmt
-go-fmt:
-	gofmt -s -e -d $(shell find . -name "*.go" | grep -v /vendor/) > error.txt
-	if [ -s error.txt ]; then\
-		cat error.txt;\
-		rm error.txt;\
-		exit 1;\
-	fi
-	rm error.txt
+SHELL := /bin/bash
 
-.PHONY: go-vet
-go-vet:
-	$(GO) vet $(shell go list ./...)
+# allow optional per-repo overrides
+-include Makefile.overrides.mk
 
-.PHONY: go-lint
-go-lint:
-	$(GO) get -u golang.org/x/lint/golint
-	golint -set_exit_status $(shell go list ./...)
+# Set the environment variable BUILD_WITH_CONTAINER to use a container
+# to build the repo. The only dependencies in this mode are to have make and
+# docker. If you'd rather build with a local tool chain instead, you'll need to
+# figure out all the tools you need in your environment to make that work.
+export BUILD_WITH_CONTAINER ?= 0
 
-.PHONY: go-ineffassign
-go-ineffassign:
-	$(GO) get -u github.com/gordonklaus/ineffassign
-	ineffassign $(shell find . -name "*.go" | grep -v /vendor/)
+ifeq ($(BUILD_WITH_CONTAINER),1)
 
-.PHONY: go-mod
-go-mod:
-	$(GO) mod tidy
-	$(GO) mod vendor
+# An export free of arugments in a Makefile places all variables in the Makefile into the
+# environment. This is needed to allow overrides from Makefile.overrides.mk.
+export
 
-	# go mod vendor only copies the .go files.  Also need
-	# to populate the k8s.io/code-generator folder with the
-	# scripts for generating informer/lister code
+$(shell $(shell pwd)/common/scripts/setup_env.sh)
 
-	# Obtain k8s.io/code-generator version
-	$(eval codeGenVer=$(shell grep "code-generator" go.mod | awk '{print $$2}'))
+RUN = ./common/scripts/run.sh
 
-	# Add the required files into the vendor folder
-	cp ${GOPATH}/pkg/mod/${CODEGEN_PATH}@${codeGenVer}/generate-groups.sh vendor/${CODEGEN_PATH}/generate-groups.sh
-	chmod +x vendor/${CODEGEN_PATH}/generate-groups.sh
-	cp -R ${GOPATH}/pkg/mod/${CODEGEN_PATH}@${codeGenVer}/cmd/defaulter-gen vendor/${CODEGEN_PATH}/cmd/defaulter-gen
-	chmod -R +w vendor/${CODEGEN_PATH}/cmd/defaulter-gen
+MAKE_DOCKER = $(RUN) make --no-print-directory -e -f Makefile.core.mk
 
-# Generate manifests e.g. CRD, RBAC etc.
-.PHONY: manifests
-manifests: controller-gen
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./operator/..." output:crd:artifacts:config=operator/config/crd/bases
-	# Add copyright headers to the kubebuildr generated CRDs
-	./operator/hack/add-crd-header.sh
-	./operator/hack/update-codegen-verrazzano.sh
+%:
+	@$(MAKE_DOCKER) $@
 
-	# Re-generate operator.yaml using template yaml file
-	cat operator/config/deploy/verrazzano-platform-operator.yaml | sed -e "s|IMAGE_NAME|$(shell grep "image:" operator/deploy/operator.yaml | awk '{ print $$2 }')|g" > operator/deploy/operator.yaml
-	cat operator/config/crd/bases/install.verrazzano.io_verrazzanos.yaml >> operator/deploy/operator.yaml
+default:
+	@$(MAKE_DOCKER)
 
-# Generate code
-.PHONY: generate
-generate: controller-gen
-	$(CONTROLLER_GEN) object:headerFile="operator/hack/boilerplate.go.txt" paths="./operator/..."
+shell:
+	@$(RUN) /bin/bash
 
-# find or download controller-gen
-# download controller-gen if necessary
-.PHONY: controller-gen
-controller-gen:
-ifeq (, $(shell which controller-gen))
-	@{ \
-	set -e ;\
-	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
-	cd $$CONTROLLER_GEN_TMP_DIR ;\
-	go mod init tmp ;\
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.5 ;\
-	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
-	}
-CONTROLLER_GEN=$(GOBIN)/controller-gen
+.PHONY: default
+
 else
-CONTROLLER_GEN=$(shell which controller-gen)
+
+# If we are not in build container, we need a workaround to get environment properly set
+# Write to file, then include
+$(shell mkdir -p out)
+$(shell $(shell pwd)/common/scripts/setup_env.sh envfile > out/.env)
+include out/.env
+# An export free of arugments in a Makefile places all variables in the Makefile into the
+# environment. This behavior may be surprising to many that use shell often, which simply
+# displays the existing environment
+export
+
+export GOBIN ?= $(GOPATH)/bin
+include Makefile.core.mk
+
 endif
-
-#
-# Docker-related tasks
-#
-.PHONY: docker-clean
-docker-clean:
-	rm -rf ${DIST_DIR}
-
-.PHONY: docker-build
-docker-build: go-mod
-	docker build --pull -f operator/Dockerfile \
-		-t ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} .
-
-.PHONY: docker-push
-docker-push: docker-build
-	docker tag ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ${DOCKER_IMAGE_FULLNAME}:${DOCKER_IMAGE_TAG}
-	docker push ${DOCKER_IMAGE_FULLNAME}:${DOCKER_IMAGE_TAG}
-
-	if [ "${CREATE_LATEST_TAG}" == "1" ]; then \
-		docker tag ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG} ${DOCKER_IMAGE_FULLNAME}:latest; \
-		docker push ${DOCKER_IMAGE_FULLNAME}:latest; \
-	fi
-
-#
-# Test-related tasks
-#
-.PHONY: unit-test
-unit-test: go-install
-	$(GO) test -v  ./operator/internal/... ./operator/controllers/...
-
-.PHONY: coverage
-coverage: unit-test
-	./operator/build/scripts/coverage.sh html
-
-#
-# Test-related tasks
-#
-CLUSTER_NAME = verrazzano
-VERRAZZANO_NS = verrazzano-install
-BUILD-DEPLOY = build/deploy
-DEPLOY = deploy
-OPERATOR_SETUP = test/operatorsetup
-
-.PHONY: integ-test
-integ-test: create-cluster
-	echo 'Load docker image for the verrazzano-platform-operator...'
-
-	echo 'Deploy verrazzano platform operator ...'
-ifdef JENKINS_URL
-	kind load docker-image --name ${CLUSTER_NAME} ${DOCKER_REPO}/${DOCKER_NAMESPACE}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
-	kubectl apply -f operator/deploy/operator.yaml
-else
-	kind load docker-image --name ${CLUSTER_NAME} ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
-	mkdir -p build/deploy
-	cat operator/config/deploy/verrazzano-platform-operator.yaml | sed -e "s|IMAGE_NAME|${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}|g" > ${BUILD-DEPLOY}/operator.yaml
-	cat operator/config/crd/bases/install.verrazzano.io_verrazzanos.yaml >> ${BUILD-DEPLOY}/operator.yaml
-	kubectl apply -f ${BUILD-DEPLOY}/operator.yaml
-endif
-
-	echo 'Run tests...'
-	ginkgo -v --keepGoing -cover operator/test/integ/... || IGNORE=FAILURE
-
-.PHONY: create-cluster
-create-cluster:
-ifdef JENKINS_URL
-	./operator/build/scripts/cleanup.sh ${CLUSTER_NAME}
-endif
-	echo 'Create cluster...'
-	HTTP_PROXY="" HTTPS_PROXY="" http_proxy="" https_proxy="" time kind create cluster \
-		--name ${CLUSTER_NAME} \
-		--wait 5m \
-		--config=operator/test/kind-config.yaml
-	kubectl config set-context kind-${CLUSTER_NAME}
-ifdef JENKINS_URL
-	# Get the ip address of the container running the kube apiserver
-	# and update the kubeconfig file to point to that address, instead of localhost
-	sed -i -e "s|127.0.0.1.*|`docker inspect ${CLUSTER_NAME}-control-plane | jq '.[].NetworkSettings.IPAddress' | sed 's/"//g'`:6443|g" ${HOME}/.kube/config
-	cat ${HOME}/.kube/config | grep server
-endif
-
-.PHONY: delete-cluster
-delete-cluster:
-	kind delete cluster --name ${CLUSTER_NAME}
-
-.PHONY: push-tag
-push-tag:
-	PUBLISH_TAG="${DOCKER_IMAGE_TAG}"; \
-	echo "Tagging and pushing image ${DOCKER_IMAGE_FULLNAME}:$$PUBLISH_TAG"; \
-	docker pull "${DOCKER_IMAGE_FULLNAME}:${DOCKER_IMAGE_TAG}"; \
-	docker tag "${DOCKER_IMAGE_FULLNAME}:${DOCKER_IMAGE_TAG}" "${DOCKER_IMAGE_FULLNAME}:$$PUBLISH_TAG"; \
-	docker push "${DOCKER_IMAGE_FULLNAME}:$$PUBLISH_TAG"
-
-.PHONY: create-test-deploy
-create-test-deploy:
-	if [ -n "${VZ_DEV_IMAGE}" ]; then \
-		echo "Building local operator deployment resource file in /tmp/operator.yaml, VZ_DEV_IMAGE=${VZ_DEV_IMAGE}"; \
-		cat operator/config/deploy/verrazzano-platform-operator.yaml | sed -e "s|IMAGE_NAME|${VZ_DEV_IMAGE}|g" > /tmp/operator.yaml; \
-		cat operator/config/crd/bases/install.verrazzano.io_verrazzanos.yaml >> /tmp/operator.yaml; \
-	else \
-		echo "VZ_DEV_IMAGE not defined, please set it to a valid image name/tag"; \
-	fi

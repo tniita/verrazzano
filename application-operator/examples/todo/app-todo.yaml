@@ -1,0 +1,27 @@
+# Copyright (C) 2020, Oracle and/or its affiliates.
+# Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
+
+apiVersion: core.oam.dev/v1alpha2
+kind: ApplicationConfiguration
+metadata:
+  name: todo
+  namespace: todo
+  annotations:
+    version: v1.0.0
+    description: "ToDo example"
+spec:
+  components:
+    - componentName: todo-wls
+      traits:
+        - trait:
+            apiVersion: oam.verrazzano.io/v1alpha1
+            kind: IngressTrait
+            metadata:
+              name: todo-ingress
+            spec:
+              rules:
+                - hosts:
+                    - "*"
+                  paths:
+                    - path: "/todo"
+                      pathType: Prefix
