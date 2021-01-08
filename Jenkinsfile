@@ -6,6 +6,7 @@ def availableRegions = [ "us-ashburn-1", "ap-chuncheon-1", "ap-hyderabad-1", "ap
                           "ap-tokyo-1", "ca-montreal-1", "ca-toronto-1", "eu-amsterdam-1", "eu-frankfurt-1", "eu-zurich-1", "me-jeddah-1",
                           "sa-saopaulo-1", "uk-london-1", "us-phoenix-1" ]
 Collections.shuffle(availableRegions)
+def agentLabel = env.JOB_NAME.contains('kind') || env.JOB_NAME.contains('verrazzano-acceptance-test-suite') ? "VM.Standard2.8" : ""
 
 pipeline {
     options {
@@ -18,6 +19,7 @@ pipeline {
             args "${RUNNER_DOCKER_ARGS}"
             registryUrl "${RUNNER_DOCKER_REGISTRY_URL}"
             registryCredentialsId 'ocir-pull-and-push-account'
+            label "${agentLabel}"
         }
     }
 
@@ -51,6 +53,13 @@ pipeline {
     }
 
     environment {
+        CLUSTER_NAME = 'v8o-kind'
+        POST_DUMP_FAILED_FILE = "${WORKSPACE}/post_dump_failed_file.tmp"
+        KUBECONFIG = "${WORKSPACE}/test_kubeconfig"
+        OCR_CREDS = credentials('ocr-pull-and-push-account')
+        OCR_REPO = 'container-registry.oracle.com'
+        IMAGE_PULL_SECRET = 'verrazzano-container-registry'
+
         DOCKER_CI_IMAGE_NAME = 'verrazzano-platform-operator-jenkins'
         DOCKER_PUBLISH_IMAGE_NAME = 'verrazzano-platform-operator'
         DOCKER_IMAGE_NAME = "${env.BRANCH_NAME == 'develop' || env.BRANCH_NAME == 'master' ? env.DOCKER_PUBLISH_IMAGE_NAME : env.DOCKER_CI_IMAGE_NAME}"
@@ -238,6 +247,7 @@ pipeline {
             }
         }
 
+        /**
         stage('Kick off KinD Acceptance tests') {
             when {
                 allOf {
@@ -261,6 +271,41 @@ pipeline {
                                      string(name: 'INSTALL_PROFILE', value: 'dev')],
                         wait: true,
                         propagate: true
+            }
+        }
+        **/
+
+        stage('install-kind') {
+            steps {
+                sh """
+                    cd ${GO_REPO_PATH}/verrazzano
+                    ./tests/e2e/config/scripts/install_kind.sh
+                """
+            }
+        }
+
+        stage("create-image-pull-secrets") {
+            steps {
+                sh """
+                    # Create image pull secret for Verrazzano docker images
+                    cd ${GO_REPO_PATH}/verrazzano
+                    ./tests/e2e/config/scripts/create-image-pull-secret.sh "${IMAGE_PULL_SECRET}" "${DOCKER_REPO}" "${DOCKER_CREDS_USR}" "${DOCKER_CREDS_PSW}"
+                    ./tests/e2e/config/scripts/create-image-pull-secret.sh github-packages "${DOCKER_REPO}" "${DOCKER_CREDS_USR}" "${DOCKER_CREDS_PSW}"
+                    ./tests/e2e/config/scripts/create-image-pull-secret.sh ocr "${OCR_REPO}" "${OCR_CREDS_USR}" "${OCR_CREDS_PSW}"
+                """
+            }
+        }
+
+        stage("install-platform-operator") {
+            steps {
+                sh """
+                    cd ${GO_REPO_PATH}/verrazzano
+                    kubectl apply -f operator/deploy/operator.yaml
+                    # make sure ns exists
+                    ./tests/e2e/config/scripts/check_verrazzano_ns_exists.sh verrazzano-install
+                    # create secret in verrazzano-install ns
+                    ./tests/e2e/config/scripts/create-image-pull-secret.sh "${IMAGE_PULL_SECRET}" "${DOCKER_REPO}" "${DOCKER_CREDS_USR}" "${DOCKER_CREDS_PSW}" "verrazzano-install"
+                """
             }
         }
 
@@ -289,6 +334,14 @@ pipeline {
     post {
         always {
             deleteDir()
+            sh """
+                cd ${GO_REPO_PATH}/verrazzano
+                ./tests/e2e/config/scripts/delete-kind-cluster.sh
+                if [ -f ${POST_DUMP_FAILED_FILE} ]; then
+                  echo "Failures seen during dumping of artifacts, treat post as failed"
+                  exit 1
+                fi
+            """
         }
         failure {
             mail to: "${env.BUILD_NOTIFICATION_TO_EMAIL}", from: "${env.BUILD_NOTIFICATION_FROM_EMAIL}",
